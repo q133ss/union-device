@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import random
+import re
 import time
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
@@ -26,7 +27,7 @@ from app.config import Settings
 
 RETRYABLE_STATUS = {408, 409, 425, 429, 500, 502, 503, 504}
 MAX_BACKOFF_SECONDS = 8.0
-MAX_RETRY_AFTER_SECONDS = 30.0
+MAX_RETRY_AFTER_SECONDS = 90.0
 
 
 class LLMError(RuntimeError):
@@ -182,6 +183,8 @@ class LLMClient:
         }
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
+        if self.settings.extra_body:
+            payload.update(self.settings.extra_body)
 
         headers = {
             "Authorization": f"Bearer {self.settings.api_key}",
@@ -332,6 +335,24 @@ def _status_error(response: httpx.Response) -> LLMError:
             retryable=True,
             details=details,
         )
+    if status == 402:
+        # Некоторые бесплатные шлюзы используют 402 для лимита «N запросов в минуту».
+        retry_after = _retry_after_from_message(detail)
+        if retry_after is not None:
+            details["retry_after"] = retry_after
+            return LLMError(
+                f"Лимит бесплатного доступа к LLM: повтор через {retry_after:.0f} c.",
+                code="llm_rate_limit",
+                status=status,
+                retryable=True,
+                details=details,
+            )
+        return LLMError(
+            f"Платёжный лимит провайдера LLM (402): {detail or 'требуется оплата'}",
+            code="llm_payment_required",
+            status=status,
+            details=details,
+        )
     if status in RETRYABLE_STATUS:
         return LLMError(
             f"Провайдер LLM вернул временную ошибку {status}. Попробуйте ещё раз.",
@@ -346,6 +367,14 @@ def _status_error(response: httpx.Response) -> LLMError:
         status=status,
         details=details,
     )
+
+
+def _retry_after_from_message(message: str) -> float | None:
+    """Достаёт паузу из текста вида «Retry after 38s»."""
+    match = re.search(r"retry\s+after\s+(\d+(?:[.,]\d+)?)\s*s", message, re.IGNORECASE)
+    if not match:
+        return None
+    return min(float(match.group(1).replace(",", ".")), MAX_RETRY_AFTER_SECONDS)
 
 
 def _error_message(response: httpx.Response) -> str:

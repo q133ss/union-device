@@ -39,6 +39,7 @@ LLM_STATUS = {
     "llm_unavailable": 502,
     "llm_bad_request": 502,
     "llm_invalid_json": 502,
+    "llm_payment_required": 502,
 }
 
 

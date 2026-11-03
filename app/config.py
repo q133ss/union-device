@@ -6,8 +6,9 @@
 
 from __future__ import annotations
 
+import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 DEFAULT_BASE_URL = "https://api.openai.com/v1"
@@ -62,6 +63,23 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on", "да"}
 
 
+def _env_json(name: str) -> dict:
+    """Дополнительные поля тела запроса к LLM (например, reasoning_effort).
+
+    Пример: ``LLM_EXTRA_JSON={"reasoning_effort": "low"}``
+    """
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except ValueError as exc:
+        raise SettingsError(f"{name}: ожидался JSON-объект, получено {raw!r}") from exc
+    if not isinstance(parsed, dict):
+        raise SettingsError(f"{name}: ожидался JSON-объект, получено {type(parsed).__name__}")
+    return parsed
+
+
 @dataclass(frozen=True)
 class Settings:
     """Параметры подключения к LLM и генерации."""
@@ -74,6 +92,7 @@ class Settings:
     temperature: float = 0.2
     json_mode: bool = True
     max_tokens: int = 4000
+    extra_body: dict = field(default_factory=dict)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -92,6 +111,7 @@ class Settings:
             temperature=_env_float("LLM_TEMPERATURE", 0.2),
             json_mode=_env_bool("LLM_JSON_MODE", True),
             max_tokens=_env_int("LLM_MAX_TOKENS", 4000),
+            extra_body=_env_json("LLM_EXTRA_JSON"),
         )
 
     @property

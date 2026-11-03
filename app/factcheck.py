@@ -205,8 +205,14 @@ def sanitize(draft: CardDraft, report: FactCheckReport, gaps: Sequence[Gap] = ()
         warnings.append(f"Заголовок сокращён до {MAX_TITLE_LENGTH} символов")
 
     if len(draft.seo_description) > DESCRIPTION_MAX:
-        updates["seo_description"] = _trim_description(draft.seo_description)
+        updates["seo_description"] = _trim_to(draft.seo_description, DESCRIPTION_MAX, DESCRIPTION_MIN)
         warnings.append(f"Описание сокращено до {DESCRIPTION_MAX} символов")
+
+    if len(draft.commercial_block) > COMMERCIAL_MAX:
+        updates["commercial_block"] = _trim_to(
+            draft.commercial_block, COMMERCIAL_MAX, COMMERCIAL_MIN
+        )
+        warnings.append(f"Commercial-блок сокращён до {COMMERCIAL_MAX} символов")
 
     merged_gaps = _merge_gaps(draft.data_gaps, gaps)
     if merged_gaps != list(draft.data_gaps):
@@ -396,14 +402,15 @@ def _trim_title(title: str) -> str:
     return cut.rstrip(" ,;:—-")
 
 
-def _trim_description(description: str) -> str:
-    text = description.strip()
-    if len(text) <= DESCRIPTION_MAX:
+def _trim_to(text: str, limit: int, min_keep: int) -> str:
+    """Обрезает текст до лимита по границе предложения, если это возможно."""
+    text = text.strip()
+    if len(text) <= limit:
         return text
-    cut = text[:DESCRIPTION_MAX]
+    cut = text[:limit]
     for separator in (". ", "! ", "? "):
         position = cut.rfind(separator)
-        if position > DESCRIPTION_MIN * 0.7:
+        if position > min_keep * 0.7:
             return cut[: position + 1].strip()
     if " " in cut:
         cut = cut[: cut.rfind(" ")]

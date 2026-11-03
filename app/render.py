@@ -6,7 +6,7 @@ import json
 from typing import Iterable
 
 from app.models import ProductCard
-from app.prompts import DESCRIPTION_MAX, MAX_TITLE_LENGTH
+from app.prompts import DESCRIPTION_MAX, DESCRIPTION_MIN, MAX_TITLE_LENGTH
 
 NO_DATA = "данных нет"
 
@@ -37,7 +37,10 @@ def to_markdown(card: ProductCard) -> str:
     lines.append("")
 
     description = card.seo_description or NO_DATA
-    lines.append(f"## SEO-описание ({len(card.seo_description)} символов, норма {DESCRIPTION_MAX})")
+    lines.append(
+        f"## SEO-описание ({len(card.seo_description)} символов, "
+        f"норма {DESCRIPTION_MIN}–{DESCRIPTION_MAX})"
+    )
     lines.append("")
     lines.append(description)
     lines.append("")
@@ -70,7 +73,7 @@ def to_markdown(card: ProductCard) -> str:
     if card.data_gaps:
         lines.append("## Чего не хватает в данных")
         lines.append("")
-        lines.extend(f"- {gap}" for gap in card.data_gaps)
+        lines.extend(f"- {gap} — {NO_DATA}" for gap in card.data_gaps)
         lines.append("")
 
     if card.warnings:
@@ -118,11 +121,13 @@ def _meta_lines(card: ProductCard) -> Iterable[str]:
     yield status
 
     llm = (card.meta or {}).get("llm") or {}
+    elapsed = (card.meta or {}).get("elapsed_seconds")
+    if elapsed is None:
+        elapsed = (llm.get("latency_ms") or 0) / 1000
     if llm:
-        seconds = (llm.get("latency_ms") or 0) / 1000
         yield (
             f"Модель: {llm.get('model') or '—'} · вызовов: {llm.get('calls', 1)} · "
-            f"токенов: {llm.get('total_tokens', 0)} · {seconds:.1f} c"
+            f"токенов: {llm.get('total_tokens', 0)} · {float(elapsed):.1f} c"
         )
     generated_at = (card.meta or {}).get("generated_at")
     if generated_at:

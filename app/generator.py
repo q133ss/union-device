@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -33,6 +34,7 @@ async def generate_card(analysis: Analysis, client: LLMClient) -> GenerationResu
     вычищение неподтверждённых строк → итоговая карточка с отчётом.
     """
     product = analysis.product
+    started = time.perf_counter()
     raw_draft, result = await client.complete_json(
         SYSTEM_PROMPT, build_user_prompt(product, analysis.gaps)
     )
@@ -54,7 +56,9 @@ async def generate_card(analysis: Analysis, client: LLMClient) -> GenerationResu
 
     final_draft = sanitize(draft, report, analysis.gaps)
     final_report = check(final_draft, product, analysis.gaps)
-    card = _build_card(product, final_draft, final_report, usage, repair_attempts, analysis)
+    card = _build_card(
+        product, final_draft, final_report, usage, repair_attempts, analysis, started
+    )
     return GenerationResult(card=card, report=final_report, repair_attempts=repair_attempts)
 
 
@@ -124,6 +128,7 @@ def _build_card(
     usage: _Usage,
     repair_attempts: int,
     analysis: Analysis,
+    started: float,
 ) -> ProductCard:
     warnings = [warning.strip() for warning in draft.warnings if warning.strip()]
     for error in report.errors:
@@ -131,6 +136,7 @@ def _build_card(
 
     meta = {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "elapsed_seconds": round(time.perf_counter() - started, 1),
         "llm": usage.as_dict(),
         "repair_attempts": repair_attempts,
         "gaps_detected": [gap.label for gap in analysis.gaps],
