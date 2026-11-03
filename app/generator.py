@@ -15,7 +15,7 @@ from app.models import CardDraft, ProductCard, SpecItem
 from app.prompts import SYSTEM_PROMPT, build_repair_prompt, build_user_prompt
 from app.validation import Analysis
 
-MAX_REPAIR_ATTEMPTS = 1
+MAX_REPAIR_ATTEMPTS = 2
 
 
 @dataclass(frozen=True)

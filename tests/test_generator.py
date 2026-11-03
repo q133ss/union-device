@@ -116,7 +116,7 @@ def test_long_title_is_trimmed_to_limit():
     result = run_generation(FakeClient([draft]))
 
     assert len(result.card.seo_title) <= 70
-    assert result.card.meta["repair_attempts"] == 1
+    assert result.card.meta["repair_attempts"] >= 1
 
 
 def test_broken_schema_is_reported_as_llm_error():

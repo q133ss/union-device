@@ -94,11 +94,16 @@ data_gaps. Если характеристика не нужна для этой
 
 
 def build_user_prompt(product: ProductInput, gaps: Sequence[Gap]) -> str:
-    """Собирает пользовательское сообщение: данные прибора + список пропусков."""
+    """Собирает пользовательское сообщение: данные прибора + список пропусков.
+
+    ``category`` намеренно не передаётся: это раздел каталога («Теплотехнические
+    приборы, газоанализаторы, счетчики / Манометры показывающие»), а не свойство
+    прибора. Модель принимала его за перечень областей применения и писала, что
+    манометр используют «в газоанализаторах и счётчиках».
+    """
     payload = {
         "name": product.name,
         "manufacturer": product.manufacturer,
-        "category": product.category,
         "specs": product.specs,
         "description": product.description,
     }
@@ -136,7 +141,6 @@ def build_repair_prompt(
     payload = {
         "name": product.name,
         "manufacturer": product.manufacturer,
-        "category": product.category,
         "specs": product.specs,
         "description": product.description,
     }
