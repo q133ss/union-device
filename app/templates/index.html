@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>union-device — карточки товаров КИП</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --border: #e2e5ea;
+      --text: #1c2430;
+      --muted: #6b7684;
+      --accent: #1f5eff;
+      --ok: #12805c;
+      --warn: #b07000;
+      --err: #b42318;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.55 "Segoe UI", Roboto, system-ui, sans-serif;
+    }
+    header {
+      padding: 22px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    h1 { font-size: 20px; margin: 0; }
+    header .meta { color: var(--muted); font-size: 13px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge.ok { background: #e6f6ef; color: var(--ok); }
+    .badge.warn { background: #fdf3e2; color: var(--warn); }
+    main {
+      display: grid;
+      grid-template-columns: minmax(320px, 460px) 1fr;
+      gap: 20px;
+      padding: 20px 28px 40px;
+      align-items: start;
+    }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 12px; }
+    textarea {
+      width: 100%;
+      min-height: 420px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font: 13px/1.5 Consolas, "Cascadia Mono", monospace;
+      color: var(--text);
+      background: #fbfcfd;
+    }
+    textarea:focus { outline: 2px solid rgba(31, 94, 255, .25); border-color: var(--accent); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+    button {
+      font: inherit;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: .15s;
+    }
+    button.primary { background: var(--accent); color: #fff; }
+    button.primary:disabled { opacity: .55; cursor: progress; }
+    button.ghost { background: #f2f4f7; color: var(--text); border-color: var(--border); }
+    button.ghost:hover { background: #e9edf3; }
+    button.small { padding: 5px 11px; font-size: 13px; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .tab {
+      border: 1px solid var(--border);
+      background: #f2f4f7;
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    pre {
+      margin: 0;
+      padding: 16px;
+      background: #0f1720;
+      color: #e6edf3;
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 620px;
+      font: 13px/1.55 Consolas, "Cascadia Mono", monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    pre.light {
+      background: #fbfcfd;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .status { margin-bottom: 14px; }
+    .status-line { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    ul.gaps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+    ul.gaps li { margin: 2px 0; }
+    .error {
+      border-left: 4px solid var(--err);
+      background: #fff4f3;
+      padding: 12px 14px;
+      border-radius: 8px;
+      color: var(--err);
+      white-space: pre-wrap;
+    }
+    .empty { color: var(--muted); padding: 40px 8px; text-align: center; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+    footer { padding: 0 28px 28px; color: var(--muted); font-size: 12px; }
+    code { background: #eef1f5; padding: 1px 5px; border-radius: 5px; font-size: 12px; }
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>union-device · карточки КИП</h1>
+    <div class="meta">JSON → LLM → проверка на выдуманные данные → карточка товара</div>
+  </div>
+  <div class="meta">
+    Модель: <code>{{ model }}</code> ·
+    {% if llm_configured %}
+      <span class="badge ok">LLM подключена</span>
+    {% else %}
+      <span class="badge warn">LLM_API_KEY не задан</span>
+    {% endif %}
+    · v{{ version }}
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>Данные товара</h2>
+    <textarea id="input" spellcheck="false">{{ example_json }}</textarea>
+    <div class="row">
+      <button class="primary" id="generate">Сгенерировать карточку</button>
+      <button class="ghost" id="format" title="Форматировать JSON">Форматировать</button>
+    </div>
+    {% if products %}
+      <div class="row">
+        <span class="hint">Загрузить:</span>
+        {% for product in products %}
+          <button class="ghost small load" data-id="{{ product.id }}">{{ product.name }}</button>
+        {% endfor %}
+      </div>
+    {% endif %}
+    <div class="row">
+      <span class="hint">Проверяются: объёмы (70 / 800–1200 символов), количество запросов,
+        отсутствие чисел и характеристик, которых нет во входных данных.</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Результат</h2>
+    <div id="output" class="empty">Заполните данные и нажмите «Сгенерировать карточку».</div>
+  </section>
+</main>
+
+<footer>
+  API: <code>POST /api/cards?format=json|markdown|both</code> ·
+  <code>POST /api/cards/batch</code> ·
+  <code>GET /health</code>
+</footer>
+
+<script>
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const generateBtn = document.getElementById('generate');
+  const formatBtn = document.getElementById('format');
+  let current = { markdown: '', json: '' };
+  let activeTab = 'markdown';
+
+  formatBtn.addEventListener('click', () => {
+    try {
+      input.value = JSON.stringify(JSON.parse(input.value), null, 2);
+    } catch (error) {
+      showError('Невалидный JSON: ' + error.message);
+    }
+  });
+
+  document.querySelectorAll('.load').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/example?product=' + encodeURIComponent(button.dataset.id));
+        const data = await response.json();
+        input.value = JSON.stringify(data, null, 2);
+      } catch (error) {
+        showError('Не удалось загрузить пример: ' + error.message);
+      }
+    });
+  });
+
+  generateBtn.addEventListener('click', async () => {
+    let payload;
+    try {
+      payload = JSON.parse(input.value);
+    } catch (error) {
+      showError('Невалидный JSON во входных данных: ' + error.message);
+      return;
+    }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Генерирую…';
+    output.className = '';
+    output.innerHTML = '<div class="empty">Модель формирует карточку, это занимает 10–40 секунд…</div>';
+
+    try {
+      const response = await fetch('/api/cards?format=both', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        showError(formatError(data, response.status));
+        return;
+      }
+      renderResult(data);
+    } catch (error) {
+      showError('Сеть недоступна: ' + error.message);
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Сгенерировать карточку';
+    }
+  });
+
+  function renderResult(data) {
+    current.markdown = data.markdown || '';
+    current.json = JSON.stringify(data.card, null, 2);
+    const card = data.card;
+    const passed = card.fact_check && card.fact_check.passed;
+    const gaps = card.data_gaps || [];
+    const warnings = card.warnings || [];
+
+    output.innerHTML = `
+      <div class="status">
+        <div class="status-line">
+          <span class="badge ${passed ? 'ok' : 'warn'}">
+            ${passed ? 'Проверка достоверности пройдена' : 'Есть замечания проверки'}
+          </span>
+          <span class="hint">заголовок ${card.seo_title.length}/70 · описание ${card.seo_description.length} симв. ·
+            запросов ${card.search_queries.length}</span>
+        </div>
+        ${gaps.length ? `<ul class="gaps">${gaps.map((gap) => `<li>${escapeHtml(gap)}</li>`).join('')}</ul>` : ''}
+      </div>
+      <div class="tabs">
+        <div class="tab ${activeTab === 'markdown' ? 'active' : ''}" data-tab="markdown">Markdown</div>
+        <div class="tab ${activeTab === 'json' ? 'active' : ''}" data-tab="json">JSON</div>
+        <button class="ghost small" id="copy">Скопировать</button>
+      </div>
+      <pre id="content" class="${activeTab === 'markdown' ? 'light' : ''}">${escapeHtml(activeTab === 'markdown' ? current.markdown : current.json)}</pre>
+      ${warnings.length ? `<details><summary>Предупреждения (${warnings.length})</summary><ul class="gaps">${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join('')}</ul></details>` : ''}
+    `;
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        activeTab = tab.dataset.tab;
+        document.querySelectorAll('.tab').forEach((item) => item.classList.toggle('active', item === tab));
+        const content = document.getElementById('content');
+        content.textContent = activeTab === 'markdown' ? current.markdown : current.json;
+        content.className = activeTab === 'markdown' ? 'light' : '';
+      });
+    });
+
+    const copy = document.getElementById('copy');
+    if (copy) {
+      copy.addEventListener('click', async () => {
+        await navigator.clipboard.writeText(activeTab === 'markdown' ? current.markdown : current.json);
+        copy.textContent = 'Скопировано';
+        setTimeout(() => (copy.textContent = 'Скопировать'), 1500);
+      });
+    }
+  }
+
+  function showError(message) {
+    output.className = '';
+    output.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
+  }
+
+  function formatError(data, status) {
+    if (!data || !data.error) return 'Ошибка ' + status;
+    const error = data.error;
+    const issues = error.details && error.details.issues;
+    const details = Array.isArray(issues) ? issues.map((issue) => `• ${issue.field}: ${issue.message}`).join('\n') : '';
+    return `${error.message || 'Ошибка'}${error.code ? ' (' + error.code + ')' : ''}${details ? '\n' + details : ''}`;
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]);
+  }
+</script>
+</body>
+</html>
