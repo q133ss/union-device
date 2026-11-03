@@ -1,0 +1,4 @@
+# Нормализуем переводы строк: в репозитории — LF, рабочая копия на Windows может быть CRLF
+* text=auto eol=lf
+*.png binary
+*.jpg binary
