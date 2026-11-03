@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2026-11-03T08:10:26+03:00">
+    <shop>
+        <name>СОЮЗ-ПРИБОР</name>
+        <company>СОЮЗ-ПРИБОР</company>
+        <url>https://www.souz-pribor.ru</url>
+    <categories>
+            <category id="321">Оборудование для промышленной автоматизации</category>
+            <category id="322" parentId="321">Измерители-регуляторы</category>
+            <category id="323" parentId="321">Программные контроллеры</category>
+            <category id="343" parentId="321">Программируемые реле</category>
+            <category id="344" parentId="321">Программируемые логические контроллеры (ПЛК)</category>
+            <category id="345" parentId="321">Модули ввода-вывода</category>
+            <category id="369" parentId="358">Манометры показывающие</category>
+    </categories>
+    <offers>
+<offer id="191953" available="true" group_id="14472">
+                <name>ТМ-510Р.00(0-2,5 МПа)G1/2</name>
+                <typePrefix>манометр показывающий</typePrefix>
+                <url>https://www.souz-pribor.ru/product/tm-510/</url>
+                <categoryId>369</categoryId>
+                <vendor>РОСМА</vendor>
+                <vendorCode/>
+                <picture>https://www.souz-pribor.ru/upload/iblock/d96/d962aefb202bc0db294d7c0a0626eafa.jpg</picture>
+                <price>1045</price>
+                <currencyId>RUR</currencyId>
+                <param name="Код товара">77321</param>
+            </offer>
+<offer id="73481" available="true" group_id="12672">
+                <name>ПР200-220.1.1.0</name>
+                <typePrefix>программируемое реле с дисплеем</typePrefix>
+                <url>https://www.souz-pribor.ru/product/pr200/</url>
+                <categoryId>343</categoryId>
+                <vendor>ОВЕН</vendor>
+                <vendorCode>77510</vendorCode>
+                <picture>https://www.souz-pribor.ru/upload/iblock/4d0/4fjxvlen90msseuk0h8tp59t652ng6nm/IMG_6908_.jpg</picture>
+                <price>14091</price>
+                <currencyId>RUR</currencyId>
+                <param name="Артикул">77510</param>
+                <param name="Код товара">73904</param>
+            </offer>
+    </offers>
+  </shop>
+</yml_catalog>

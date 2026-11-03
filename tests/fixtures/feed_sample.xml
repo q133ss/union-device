@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="2026-11-03T08:10:26+03:00">
+  <shop>
+    <name>СОЮЗ-ПРИБОР</name>
+    <url>https://www.souz-pribor.ru</url>
+    <categories>
+      <category id="321">Оборудование для промышленной автоматизации</category>
+      <category id="343" parentId="321">Программируемые реле</category>
+      <category id="369">Теплотехнические приборы</category>
+    </categories>
+    <offers>
+      <offer id="191953" available="true" group_id="14472">
+        <name>ТМ-510Р.00(0-2,5 МПа)G1/2</name>
+        <typePrefix>манометр показывающий</typePrefix>
+        <url>https://www.souz-pribor.ru/product/tm-510/</url>
+        <categoryId>369</categoryId>
+        <vendor>РОСМА</vendor>
+        <vendorCode/>
+        <price>1045</price>
+        <currencyId>RUR</currencyId>
+        <param name="Код товара">77321</param>
+      </offer>
+      <offer id="73481" available="false">
+        <name>ПР200-220.1.1.0</name>
+        <typePrefix>программируемое реле с дисплеем</typePrefix>
+        <url>https://www.souz-pribor.ru/product/pr200/</url>
+        <categoryId>343</categoryId>
+        <vendor>ОВЕН</vendor>
+        <vendorCode>77510</vendorCode>
+        <price>14091</price>
+        <currencyId>RUR</currencyId>
+        <param name="Артикул">77510</param>
+        <param name="Код товара">73904</param>
+      </offer>
+    </offers>
+  </shop>
+</yml_catalog>
