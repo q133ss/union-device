@@ -110,6 +110,88 @@ class ProductInput(BaseModel):
         return "\n".join(chunk for chunk in chunks if chunk)
 
 
+class SpecItem(BaseModel):
+    """Строка списка характеристик в карточке."""
+
+    name: str = Field(..., description="Название характеристики")
+    value: str = Field(..., description="Значение строго из входных данных")
+
+    @field_validator("name", "value", mode="before")
+    @classmethod
+    def _as_text(cls, value: Any) -> str:
+        return clean(value)
+
+
+class CardDraft(BaseModel):
+    """Черновик карточки в том виде, в каком его вернула модель.
+
+    Разбор намеренно терпимый: если модель прислала характеристики словарём
+    или запросы строкой — это нормализуется, а не падает с ошибкой.
+    """
+
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    seo_title: str = ""
+    seo_description: str = ""
+    specs: list[SpecItem] = Field(default_factory=list)
+    search_queries: list[str] = Field(default_factory=list)
+    commercial_block: str = ""
+    data_gaps: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+    @field_validator("specs", mode="before")
+    @classmethod
+    def _specs_from_dict(cls, value: Any) -> list[Any]:
+        if isinstance(value, dict):
+            return [{"name": key, "value": item} for key, item in value.items()]
+        if isinstance(value, str):
+            return [{"name": "", "value": value}] if value.strip() else []
+        return value or []
+
+    @field_validator("search_queries", mode="before")
+    @classmethod
+    def _queries_from_text(cls, value: Any) -> list[str]:
+        if isinstance(value, str):
+            parts = [part.strip(" -•\t") for part in value.replace("\n", ";").split(";")]
+            return [part for part in parts if part]
+        if isinstance(value, dict):
+            return [str(item) for item in value.values()]
+        return value or []
+
+    @field_validator("data_gaps", "warnings", mode="before")
+    @classmethod
+    def _list_from_text(cls, value: Any) -> list[str]:
+        if isinstance(value, str):
+            parts = [part.strip(" -•\t") for part in value.replace("\n", ";").split(";")]
+            return [part for part in parts if part]
+        return value or []
+
+    @field_validator("seo_title", "seo_description", "commercial_block", mode="before")
+    @classmethod
+    def _blank_to_empty(cls, value: Any) -> str:
+        return "" if value is None else str(value).strip()
+
+
+class ProductCard(BaseModel):
+    """Готовая карточка, которую получает контент-менеджер."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    id: str | None = None
+    name: str
+    manufacturer: str = ""
+    source_url: str | None = None
+    seo_title: str
+    seo_description: str
+    specs: list[SpecItem] = Field(default_factory=list)
+    search_queries: list[str] = Field(default_factory=list)
+    commercial_block: str = ""
+    data_gaps: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    fact_check: dict[str, Any] = Field(default_factory=dict)
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
 def _spec_value_to_text(value: Any) -> str:
     """Приводит значение характеристики к непустой строке."""
     if value is None:
